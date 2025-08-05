@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "Hypertext",
+    platforms: [.macOS(.v13)],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
         .package(url: "https://github.com/groue/GRMustache.swift", from: "6.0.0"),
