@@ -1,5 +1,4 @@
 // swift-tools-version: 6.2
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
@@ -8,8 +7,9 @@ let package = Package(
     platforms: [.macOS(.v13)],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
-        .package(url: "https://github.com/groue/GRMustache.swift", from: "6.0.0"),
-        .package(url: "https://github.com/LebJe/TOMLKit.git", from: "0.5.0"),
+        .package(url: "https://github.com/thigcampos/syntax.git", branch: "main"),
+        .package(url: "https://github.com/thigcampos/blueprint.git", branch: "main"),
+        .package(url: "https://github.com/httpswift/swifter.git", from: "1.5.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -18,8 +18,9 @@ let package = Package(
             name: "hx",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Mustache", package: "GRMustache.swift"),
-                .product(name: "TOMLKit", package: "TOMLKit"),
+                .product(name: "Blueprint", package: "blueprint"),
+                .product(name: "Syntax", package: "syntax"),
+                .product(name: "Swifter", package: "swifter"),
             ]
         )
     ]
