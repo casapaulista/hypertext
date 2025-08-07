@@ -1,48 +1,55 @@
 # Hypertext
-Hypertext is a static site generator (SSG) inspired by [Avantguarda's Hipertexto](https://github.com/avantguarda/hipertexto).
+*The future is static.*
 
-## (Expected) Usage
-Hypertext is currently under-development and most of desired features are not working as of now. Anyway, check our desired behavior.
+Static website generation, refined. Transform markdown into lightning-fast websites with elegant simplicity.
 
-### `init`
-As stated in the `-h` command, `init` creates a new Hypertext project. It is important to notice that it does require an empty folder in order to work.
-
-**Requirements**
-- An empty folder
-- A name for the project
-
-**Example**
-Create a new folder for the project:
+## Installation
 ```sh
-mkdir website
+brew install hypertext
 ```
 
-Init the Hypertext project:
+## Usage
 ```sh
-hx init website
+hx init   # Create a new project
+hx build  # Generate the website
+hx serve  # Preview locally
 ```
 
-### `build`
-The command `build` generates the website in the output directory, defaults to `/public`.
+## Philosophy
+Remove the unnecessary. What remains is pure intention.
 
+## Structure
 ```sh
-hx build
+content/   # Your words
+static/    # Your assets
+styles/    # Your aesthetic
+templates/ # Your structure
+public/    # Your website
 ```
 
-### `serve`
-This command performs two actions, `serve` build the website and then serves it with a tiny webserver.
-
-```sh
-hx serve
+## Templates — Powered by Blueprint
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+</head>
+<body>
+    {{ content }}
+</body>
+</html>
 ```
 
-### `help`
-This command does not require any introductions, it is a default command with all necessary additional explanation about the application. Although, 
-it is worth noticing that it also works for each of the mentioned commands, providing a broader usage guide to each of Hypertext's commands.
+## Content — Powered by Syntax
+```md
+--- 
+template: page.html
+title: A great article
+---
 
-To prompt all information available about the `init` command, you can enter:
-```sh
-hx init --help
+# Heading
+
+Content
 ```
 
 ## License
