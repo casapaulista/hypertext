@@ -7,9 +7,22 @@
 import ArgumentParser
 import Blueprint
 import Foundation
-import Swifter
 import Syntax
+import Thread
 
+// MARK: - Constants
+
+enum Directories {
+    static let contentURL = URL(fileURLWithPath: "content", isDirectory: true)
+    static let staticURL = URL(fileURLWithPath: "static", isDirectory: true)
+    static let stylesURL = URL(fileURLWithPath: "styles", isDirectory: true)
+    static let templatesURL = URL(fileURLWithPath: "templates", isDirectory: true)
+    static let outputURL = URL(fileURLWithPath: "public", isDirectory: true)
+}
+
+// MARK: - Error structs
+
+// Hypertext's custom runtime error
 struct RuntimeError: Error, CustomStringConvertible {
     var description: String
     init(_ description: String) {
@@ -17,6 +30,9 @@ struct RuntimeError: Error, CustomStringConvertible {
     }
 }
 
+// MARK: - Hypertext application
+
+// Command settings
 @main
 struct Hypertext: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -26,115 +42,137 @@ struct Hypertext: ParsableCommand {
     )
 }
 
+// Subcommands
 extension Hypertext {
+    // MARK: - Init command
     struct Init: ParsableCommand {
-        static let configuration = CommandConfiguration(abstract: "Create a new Hypertext project")
+        static let configuration = CommandConfiguration(abstract: "Create a new project")
         func run() throws {
-            let fileManager = FileManager.default
+            try FileManager.default.createDirectory(
+                at: Directories.contentURL, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(
+                at: Directories.staticURL, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(
+                at: Directories.stylesURL, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(
+                at: Directories.templatesURL, withIntermediateDirectories: true)
 
-            // Setting path for directories
-            let contentDirectory = URL(fileURLWithPath: "content", isDirectory: true)
-            let staticDirectory = URL(fileURLWithPath: "static", isDirectory: true)
-            let stylesDirectory = URL(fileURLWithPath: "styles", isDirectory: true)
-            let templatesDirectory = URL(fileURLWithPath: "templates", isDirectory: true)
-
-            // Creating directories
-            try fileManager.createDirectory(at: contentDirectory, withIntermediateDirectories: true)
-            try fileManager.createDirectory(at: staticDirectory, withIntermediateDirectories: true)
-            try fileManager.createDirectory(at: stylesDirectory, withIntermediateDirectories: true)
-            try fileManager.createDirectory(
-                at: templatesDirectory, withIntermediateDirectories: true)
-            print("🎉 Initialization done!")
+            print("🎉 Setup complete!")
         }
     }
+
+    // MARK: - Build command
     struct Build: ParsableCommand {
         static let configuration = CommandConfiguration(
             abstract: "Deletes the output directory if there is one and builds the site")
 
+        func recreateOutputDirectory() {
+            try? FileManager.default.removeItem(at: Directories.outputURL)
+            try? FileManager.default.createDirectory(
+                at: Directories.outputURL, withIntermediateDirectories: true)
+        }
+
+        func collectMarkdownFiles(in directoryURL: URL) throws -> [URL] {
+            var markdownFiles: [URL] = []
+
+            if let enumerator = FileManager.default.enumerator(
+                at: directoryURL, includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles])
+            {
+                for case let fileURL as URL in enumerator {
+                    if fileURL.pathExtension.lowercased() == "md" {
+                        markdownFiles.append(fileURL)
+                    }
+                }
+            }
+
+            return markdownFiles
+        }
+
+        func copyContentToOutput(directoryURL: URL) throws {
+            let files = try FileManager.default.contentsOfDirectory(
+                at: directoryURL, includingPropertiesForKeys: nil)
+
+            for file in files {
+                try FileManager.default.copyItem(
+                    at: file,
+                    to: Directories.outputURL.appendingPathComponent(file.lastPathComponent)
+                )
+            }
+        }
+
+        func getTemplateURL(parsedContent: Markdown, fileURL: URL) throws -> URL {
+            // Assert that template was defined
+            guard let template = parsedContent.metadata["template"] else {
+                throw RuntimeError("Missing template in \(fileURL.path)")
+            }
+            let templateURL = Directories.templatesURL.appendingPathComponent(template)
+            // Assert that defined template exists
+            guard FileManager.default.fileExists(atPath: templateURL.path) else {
+                throw RuntimeError("Template not found: \(templateURL.path)")
+            }
+
+            return templateURL
+        }
+
+        func getContext(parsedContent: Markdown) -> [String: String] {
+            var context: [String: String] = [:]
+            context["content"] = parsedContent.html
+            for (key, value) in parsedContent.metadata {
+                context[key] = value
+            }
+
+            return context
+        }
+
+        func writeHTMLFile(from content: String, relativePath: String) throws {
+            let outputFilePath = Directories.outputURL
+                .appendingPathComponent(relativePath)
+                .deletingPathExtension()
+                .appendingPathExtension("html")
+
+            let outputDirectory = outputFilePath.deletingLastPathComponent()
+            try FileManager.default.createDirectory(
+                at: outputDirectory, withIntermediateDirectories: true)
+
+            try content.write(to: outputFilePath, atomically: true, encoding: .utf8)
+        }
+
         func run() throws {
+            recreateOutputDirectory()
             let parser = MarkdownParser()
-            let blueprint = Blueprint.Template()
-            let fileManager = FileManager.default
 
-            // Expected directories
-            let contentDirectory = URL(fileURLWithPath: "content", isDirectory: true)
-            let staticDirectory = URL(fileURLWithPath: "static", isDirectory: true)
-            let stylesDirectory = URL(fileURLWithPath: "styles", isDirectory: true)
-            let templatesDirectory = URL(fileURLWithPath: "templates", isDirectory: true)
-            let outputDirectory = URL(fileURLWithPath: "public", isDirectory: true)
+            // Copy static and style assets
+            try copyContentToOutput(directoryURL: Directories.staticURL)
+            try copyContentToOutput(directoryURL: Directories.stylesURL)
 
-            // Remove old output and create a new directory
-            try? fileManager.removeItem(at: outputDirectory)
-            try fileManager.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+            // Process all Markdown files recursively
+            let markdownFiles = try collectMarkdownFiles(in: Directories.contentURL)
 
-            // Move all content from Static to Output
-            let staticFiles = try fileManager.contentsOfDirectory(atPath: staticDirectory.path)
-            for file in staticFiles {
-                print(file)
-                let currentFileURL = staticDirectory.appendingPathComponent(file)
-                let outputFileURL = outputDirectory.appendingPathComponent(file)
-                try fileManager.copyItem(at: currentFileURL, to: outputFileURL)
-            }
+            for fileURL in markdownFiles {
+                let markdown = try String(contentsOf: fileURL)
+                let parsed = parser.parse(markdown)
 
-            // Move all content from Styles to Output
-            let stylesFiles = try fileManager.contentsOfDirectory(atPath: stylesDirectory.path)
-            for file in stylesFiles {
-                print(file)
-                let currentFileURL = stylesDirectory.appendingPathComponent(file)
-                let outputFileURL = outputDirectory.appendingPathComponent(file)
-                try fileManager.copyItem(at: currentFileURL, to: outputFileURL)
-            }
+                let templateURL = try getTemplateURL(parsedContent: parsed, fileURL: fileURL)
+                let template = try String(contentsOf: templateURL)
 
-            // Get all markdown files in Content
-            let markdownFiles = try fileManager.contentsOfDirectory(atPath: contentDirectory.path)
-                .filter { $0.hasSuffix(".md") }
+                let context = getContext(parsedContent: parsed)
+                let rendered = try Template(string: template).render(Box(context))
 
-            for file in markdownFiles {
-                let fileURL = contentDirectory.appendingPathComponent(file)
-                let rawContent = try String(contentsOf: fileURL)
+                // Calculate relative path for output
+                let relativePath = fileURL.path.replacingOccurrences(
+                    of: Directories.contentURL.path + "/", with: ""
+                )
 
-                // Get markdown
-                let markdown = parser.parse(rawContent)
-
-                // Assert that template was defined
-                guard let fileTemplate = markdown.metadata["template"] else {
-                    throw RuntimeError("Missing template in \(fileURL.path)")
-                }
-
-                // Assert that defined template exists
-                let templateURL = templatesDirectory.appendingPathComponent(fileTemplate)
-                guard fileManager.fileExists(atPath: templateURL.path) else {
-                    throw RuntimeError("Template not found: \(templateURL.path)")
-                }
-
-                // Stringfy template
-                let templateString = try String(contentsOf: templateURL)
-
-                // Convert markdown to HTML using Ink
-                let html = markdown.html
-
-                // Build context
-                var context: [String: Any] = [:]
-                context["content"] = html
-                // Converting all values to string, might lead to an issue
-                for (key, value) in markdown.metadata {
-                    context[key] = value
-                }
-
-                // Render using Blueprint
-                let rendered = try blueprint.render(template: templateString, context: context)
-
-                // Create the output file
-                let outputFilename = file.replacingOccurrences(of: ".md", with: ".html")
-                let outputPath = outputDirectory.appendingPathComponent(outputFilename)
-                try rendered.write(to: outputPath, atomically: true, encoding: .utf8)
-
-                print("✅ Built \(outputFilename)")
+                try writeHTMLFile(from: rendered, relativePath: relativePath)
             }
 
             print("🎉 Build complete")
         }
+
     }
+
+    // MARK: - Serve command
     struct Serve: ParsableCommand {
         static let configuration = CommandConfiguration(
             abstract: "Serve the site. Rebuild and reload on change automatically")
@@ -152,38 +190,29 @@ extension Hypertext {
             server.middleware.append { request in
                 var path = request.path
 
-                // If root, serve index.html
-                if path == "/" || path.isEmpty {
-                    path = "/index"
+                // Handle root or any directory request
+                if path.isEmpty || path.hasSuffix("/") {
+                    path += "index"
                 }
 
-                // Remove trailing slash
-                if path.hasSuffix("/") {
-                    path = String(path.dropLast())
-                }
-
-                // Try to serve .html file matching path
-                let filePath = "\(publicPath)\(path).html"
-                if FileManager.default.fileExists(atPath: filePath),
-                    let content = try? String(contentsOfFile: filePath)
+                // Attempt to serve .html version first
+                let htmlPath = "\(publicPath)\(path).html"
+                if let htmlData = try? Data(contentsOf: URL(fileURLWithPath: htmlPath)),
+                    let htmlContent = String(data: htmlData, encoding: .utf8)
                 {
-                    return HttpResponse.ok(.html(content))
+                    return .ok(.html(htmlContent))
                 }
 
-                // Fallback to static files (images, CSS, JS, etc.)
-                let fullPath = publicPath + request.path
-                if FileManager.default.fileExists(atPath: fullPath),
-                    let data = try? Data(contentsOf: URL(fileURLWithPath: fullPath))
-                {
-                    return HttpResponse.raw(
-                        200, "OK", [:],
-                        { writer in
-                            try writer.write(data)
-                        })
+                // Attempt to serve as a static file (CSS, JS, images, etc.)
+                let staticPath = publicPath + request.path
+                if let data = try? Data(contentsOf: URL(fileURLWithPath: staticPath)) {
+                    return .raw(200, "OK", [:]) { writer in
+                        try writer.write(data)
+                    }
                 }
 
-                // Not found
-                return HttpResponse.notFound
+                // File not found
+                return .notFound()
             }
 
             try server.start(8000)

@@ -1,13 +1,13 @@
 {
-  "originHash" : "0aeec480eb82819303446f4cd384afdb618024ce7cebf588e4a3fb439f6f31c3",
+  "originHash" : "e96ad963220c14913071b552a40c2559c634df4cbf70e313236a79542aae0f06",
   "pins" : [
     {
       "identity" : "blueprint",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/thigcampos/blueprint.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "37abdfd316c39471e9efe19c4cfb7242aea2f401"
+        "revision" : "ed3e3cbd81e3ac0714d491bb567ab814d6add4dd",
+        "version" : "0.1.0"
       }
     },
     {
@@ -20,21 +20,21 @@
       }
     },
     {
-      "identity" : "swifter",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/httpswift/swifter.git",
-      "state" : {
-        "revision" : "9483a5d459b45c3ffd059f7b55f9638e268632fd",
-        "version" : "1.5.0"
-      }
-    },
-    {
       "identity" : "syntax",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/thigcampos/syntax.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "69700f599ba9cb4f6b650d4ed0f8187c0206bbb0"
+        "revision" : "0cc8c64f9b001ef92e71f75f08970c1c1f07749e",
+        "version" : "0.1.0"
+      }
+    },
+    {
+      "identity" : "thread",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/thigcampos/thread.git",
+      "state" : {
+        "revision" : "58cbd36eb63ccee086d88e89895d399c0662b3d7",
+        "version" : "0.1.0"
       }
     }
   ],

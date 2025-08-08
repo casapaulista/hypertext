@@ -1,12 +1,5 @@
 # Hypertext
-*The future is static.*
-
-Static website generation, refined. Transform markdown into lightning-fast websites with elegant simplicity.
-
-## Installation
-```sh
-brew install hypertext
-```
+**Hypertext** is a static site generator (SSG) written in Swift.
 
 ## Usage
 ```sh
@@ -27,7 +20,7 @@ templates/ # Your structure
 public/    # Your website
 ```
 
-## Templates — Powered by Blueprint
+## Templates
 ```html
 <!DOCTYPE html>
 <html>
@@ -35,12 +28,12 @@ public/    # Your website
     <title>{{ title }}</title>
 </head>
 <body>
-    {{ content }}
+    {{{ content }}}
 </body>
 </html>
 ```
 
-## Content — Powered by Syntax
+## Content 
 ```md
 --- 
 template: page.html
