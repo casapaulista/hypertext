@@ -1,12 +1,12 @@
 {
-  "originHash" : "e96ad963220c14913071b552a40c2559c634df4cbf70e313236a79542aae0f06",
+  "originHash" : "192d3f641e0666e923101f4809c40ea19ecd0fabdabe4a925a177fcf6c44c8e1",
   "pins" : [
     {
       "identity" : "blueprint",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/thigcampos/blueprint.git",
+      "location" : "https://github.com/casapaulista/blueprint.git",
       "state" : {
-        "revision" : "ed3e3cbd81e3ac0714d491bb567ab814d6add4dd",
+        "revision" : "cb1dc0e528fd471aad263089cf4215b40bcb5aff",
         "version" : "0.1.0"
       }
     },
@@ -22,7 +22,7 @@
     {
       "identity" : "syntax",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/thigcampos/syntax.git",
+      "location" : "https://github.com/casapaulista/syntax.git",
       "state" : {
         "revision" : "0cc8c64f9b001ef92e71f75f08970c1c1f07749e",
         "version" : "0.1.0"
@@ -31,7 +31,7 @@
     {
       "identity" : "thread",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/thigcampos/thread.git",
+      "location" : "https://github.com/casapaulista/thread.git",
       "state" : {
         "revision" : "58cbd36eb63ccee086d88e89895d399c0662b3d7",
         "version" : "0.1.0"
